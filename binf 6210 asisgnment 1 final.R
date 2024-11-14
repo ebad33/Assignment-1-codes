@@ -25,6 +25,10 @@ checkdata <- function(x) {
 }
 #Editor: this check was done multiple times in the code, added a function for readability and ease of use
 
+top5 <- function(x, y) {
+  x[order(x$y, decreasing = TRUE),]
+}
+
 #Section 1: during this section data of Bryozoan species was filtered, through using common statistics. Also, filtered the countries and names of species of the target organism.
 
 #Editor: several instances of 'my.table' as identifier names, going down the code I have given them clearer, individual names to reduce confusion.
@@ -109,20 +113,28 @@ species.table.can
 #The Abundance of North American Bryozoan species were graphed.
 
 barplot(species.table.can,
-        main = "The Abundance of Bryozoan Species",
+        main = "The Abundance of Bryozoan Species in Canada", #more representative name
         xlab = "Bryozoan Species",
         ylab = "The Abundance")
 counts <- c(9, 6, 4, 3, 1)
 names <- c("Membranipora membranacea", "Primavelans insculpta", "Phidolopora pacifica", "Schizoporella japonica", "Tubulipora tuba")
 
+species_count_canada <- dfBOLD_canada %>%
+  group_by(species_name) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count))
+
+print(species_count_canada)[1:5,]
+#Editor: pulling the organized number of species by most abundant, there is a difference than the ones used in downstream analysis. As the cancer/noncancer status was determined externally, I will not be able to update the status of these species moving forward but it will need to be done if the data is to be implemented.
+
 # Section 3: During this section Bryozoan species found in Canada were plotted using ggplot. This plot highlights the species found in highest abundance in Canada, and also, the species that contained bioactive compounds,which contribute to cancer. The first three species are highlighted as contribution to cancer treatment. 
 
 dfSpecies <- data.frame(
-  species = c("Membranipora membranacea", "Primavelans insculpta", "Phidolopora pacifica", "Schizoporella japonica", "Tubulipora tuba"),
-  
-  count = c(9,6,4,3,1),
-  contribution = c("Cancer contribution", "Cancer contribution", "Cancer contribution", "Non Cancer contribution", "Non Cancer contribution")
+  species = c("Membranipora membranacea", "Primavelans insculpta", "Heteropora pacifia", "Alcyonidium pedunculatum", "Dendrobeania murrayana"),
+  count = c(9,6,6,4,4),
+  contribution = c("Cancer contribution", "Cancer contribution", "Unknown", "Unknown", "Unknown")
 )
+
 ggplot(dfSpecies,aes(reorder(species, count), y = count, fill = contribution)) +
   geom_bar(stat = "identity") +
   labs(
@@ -145,7 +157,6 @@ ggplot(dfSpecies,aes(reorder(species, count), y = count, fill = contribution)) +
 
 #  The Countries were filtered out and then particular data pertaining to United States, such as the species found and their abundance was filtered out. Then barplot was generated to see the highest abundance of the target species found in United States and also highlighting the species that contribute to cancer treatment. The first three species were highlighted.
 
-        
 unique(dfBOLD$country)
 dfBOLD_United_States <- dfBOLD.sub %>% filter(country == "United States") #SAMESAME
 ls()
@@ -154,15 +165,15 @@ table.species.us
 counts <- c(85,35,33,29,25)
 names <- c("Watersipora subtorquata","Membranipora chesapeakensis","Membranipora membranacea","Watersipora sp. COI group A","Watersipora sp. Santa Cruz Harbour ")
 
-#removed the first dfBOLD_United_States code as it wasn't used and contained NA values
+#Editor: removed the first dfBOLD_United_States code as it wasn't used and contained NA values
 
 dfSpeciesUS <- data.frame(
-species = c("Watersipora subtorquata","Membranipora chesapeakensis","Membranipora membranacea","Watersipora sp. COI group A","Watersipora sp. Santa Cruz Harbour"),
+speciesUS = c("Watersipora subtorquata","Membranipora chesapeakensis","Membranipora membranacea","Watersipora sp. COI group A","Watersipora sp. Santa Cruz Harbour"),
 
-count = c(85,35,33,25,29),
-contribution = c("Cancer contribution", "Cancer contribution", "Cancer contribution", "Non Cancer contribution", "Non Cancer contribution")
+countUS = c(85,35,33,25,29),
+contributionUS = c("Cancer contribution", "Cancer contribution", "Cancer contribution", "Non Cancer contribution", "Non Cancer contribution")
 )
-ggplot(dfSpeciesUS,aes(reorder(species, count), y = count, fill = contribution)) +
+ggplot(dfSpeciesUS,aes(reorder(speciesUS, count), y = countUS, fill = contributionUS) +
   geom_bar(stat = "identity") +
   labs(
     title = "Bryozoan Species Found in United States", 
