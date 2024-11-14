@@ -1,40 +1,57 @@
-# "readr" package was installed to read the data obtained from BOLD database
+# Editor: small grammatical fixes were done throughout the code comments
 
-install.packages("readr")
 library(readr)
+library(dplyr)
+library(ggplot2) 
+library(maps) #Editor: added all libraries to the top of the file, pulled from throughout the code repeatedly, redundant. Also removed the code for install, can trust those using your code can intuit that.
 
 # dfBOLD was used to store the data obtained from BOLD
 
-dfBOLD <- read_tsv(file = "../data/Bryzoa_BOLD_data.tsv")
+dfBOLD <- read_tsv(file = "Bryzoa_BOLD_data.tsv")
 
 #set.seed was utilized to get consistent "runs"
 
 set.seed(123)
 
-#Section 1: during this section data of bryozoan species was filtered, through using common statistics. Also, filtered the countries and names of species of the target organism.
+checkdata <- function(x) {
+  print("names")
+  print(names(x))
+  print("range")
+  print(range(x))
+  print("mean")
+  print(mean(x))
+  print("median")
+  print(median(x))
+}
+#Editor: this check was done multiple times in the code, added a function for readability and ease of use
+
+#Section 1: during this section data of Bryozoan species was filtered, through using common statistics. Also, filtered the countries and names of species of the target organism.
+
+#Editor: several instances of 'my.table' as identifier names, going down the code I have given them clearer, individual names to reduce confusion.
 
 names(dfBOLD)
 summary(dfBOLD)
 length(dfBOLD)
-dfBOLD.sub <- dfBOLD[, c("processid", "bin_uri", "species_name", "country", "lat", "lon")]
+dfBOLD.sub <- dfBOLD[, c("processid", "bin_uri", "species_name", "country", "lat", "lon")] |>
+  filter(!is.na(species_name)) |>
+  filter(!is.na(country))
+#added filtering steps to ensure data is clean and representative
 dfBOLD.sub
-my.table <- table(dfBOLD.sub$country)
-my.table 
-names(my.table)
-mean(my.table)
-median(my.table)
-range(my.table)
-my.table[9]
-my.table[55]
+country.table <- table(dfBOLD.sub$country)
+country.table
+checkdata(country.table)
+country.table[8]
+country.table[47]
+#when removing only the species names and countries which are listed as NA the number of samples in Canada drops drastically, this may change downstream analysis but will give more proportional results
 
 #Barplot was generated of Canada and United States and their respective "Bin" numbers, to see how many bins each country had.
 
-my.table <- data.frame(
+us.canada.comp <- data.frame(
   country = c("Canada", "United States"),
-  count = c(583, 715)
+  count = c(75, 579)
 )
-barplot(height = my.table$count, 
-        names.arg = my.table$country, 
+barplot(height = us.canada.comp$count, 
+        names.arg = us.canada.comp$country, 
         xlab = "Country", 
         ylab = "Count of BOLD Records per Country", 
         col = "lightgreen",
@@ -43,27 +60,22 @@ barplot(height = my.table$count,
 
 #The Bryozoan species in obtained from the BOLD data base was filtered out and barplot was generated to see the names and amount of particular species in the BOLD data base. Basic statistics were also conducted.
 
-my.table <- table(dfBOLD.sub$species_name)
-my.table
-barplot(my.table,
+species.table <- table(dfBOLD.sub$species_name)
+species.table
+barplot(species.table,
         main = "Bold Record of Bryozoan Species",
         xlab = "Bryozoan Species",
         ylab = "Number of Bold Records")
-names(my.table)
-mean(my.table)
-median(my.table)
-range(my.table)
+checkdata(species.table)
 
 #Section 2: During this section latitude and longitude of the data was generated,so we can filter the lat and long of Canada and United States.
 
-
-my.table <- table(dfBOLD.sub$bin_uri)
-my.table
-my.table <-table(dfBOLD.sub$lat)        
-my.table
-my.table <- table(dfBOLD.sub$lon)        
-my.table
-library(dplyr)
+bin.table <- table(dfBOLD.sub$bin_uri)
+bin.table
+lat.table <-table(dfBOLD.sub$lat)        
+lat.table
+lon.table <- table(dfBOLD.sub$lon)        
+lon.table
 
 dfBOLD_United_States <- dfBOLD.sub %>%
   filter(country == "United States")
@@ -71,53 +83,47 @@ dfBOLD_United_States <- dfBOLD.sub %>%
 table_lat <- table(dfBOLD_United_States$lat)
 
 table_lat
-library(dplyr)
-
-dfBOLD_United_States <- dfBOLD.sub %>%
-  filter(country == "United States")
+#Editor: deleted redundant code, variable is already established
 
 table_lon <- table(dfBOLD_United_States$lon)
 
 table_lon
 
-#The BOLD records of Bryozoan species per country, who had high abundace was sorted from highest to lowest, to get a good idea of which country had high abundance. I had figured it was United States and Canada, however I wanted to make sure.
+#The BOLD records of Bryozoan species per country, who had high abundance was sorted from highest to lowest, to get a good idea of which country had high abundance. I had figured it was United States and Canada, however I wanted to make sure.
 
 plot(sort(table(dfBOLD.sub$country), decreasing = TRUE)[1:5],
      main = "Bold Records of Bryozoan Species per Country",
      xlab = "Countries",
      ylab = "Number of Bold Records")
 
-# A table was generated in effort to filter the Bryozoan species with their respective conutries to further filter out the data to answer my research question.
+# A table was generated in effort to filter the Bryozoan species with their respective countries to further filter out the data to answer my research question.
 
-y <- table(dfBOLD.sub$country,dfBOLD.sub$species_name)
-y
-dfBOLD_canada <- dfBOLD.sub[dfBOLD.sub$country =="Canada",] 
-library(dplyr)
+filter.species <- table(dfBOLD.sub$country,dfBOLD.sub$species_name)
+filter.species
 dfBOLD_canada <- dfBOLD.sub %>% filter(country == "Canada")
 ls()
-y <- table(dfBOLD_canada$species_name)
-y
+species.table.can <- table(dfBOLD_canada$species_name)
+species.table.can
+#Editor: removed first dfBOLD_canada filter as the first one retained the NA files
 
-#The Abundance of North American Bryozoan spcies were graphed.
+#The Abundance of North American Bryozoan species were graphed.
 
-barplot(y,
+barplot(species.table.can,
         main = "The Abundance of Bryozoan Species",
         xlab = "Bryozoan Species",
         ylab = "The Abundance")
 counts <- c(9, 6, 4, 3, 1)
 names <- c("Membranipora membranacea", "Primavelans insculpta", "Phidolopora pacifica", "Schizoporella japonica", "Tubulipora tuba")
 
-# Section 3: During this section Bryozoan species found in Canada were plotted using ggplot. This plot highlights the species found in highhest abundance in Canada, and also, the species that contained bioactive compounds,which contribute to cancer. The first three species are highlighted as contribution to cancer treatment.
+# Section 3: During this section Bryozoan species found in Canada were plotted using ggplot. This plot highlights the species found in highest abundance in Canada, and also, the species that contained bioactive compounds,which contribute to cancer. The first three species are highlighted as contribution to cancer treatment. 
 
-
-library(ggplot2)
-df <- data.frame(
+dfSpecies <- data.frame(
   species = c("Membranipora membranacea", "Primavelans insculpta", "Phidolopora pacifica", "Schizoporella japonica", "Tubulipora tuba"),
   
   count = c(9,6,4,3,1),
   contribution = c("Cancer contribution", "Cancer contribution", "Cancer contribution", "Non Cancer contribution", "Non Cancer contribution")
 )
-ggplot(df,aes(reorder(species, count), y = count, fill = contribution)) +
+ggplot(dfSpecies,aes(reorder(species, count), y = count, fill = contribution)) +
   geom_bar(stat = "identity") +
   labs(
     title = "Bryozoan Species Found in Canada", 
@@ -141,23 +147,22 @@ ggplot(df,aes(reorder(species, count), y = count, fill = contribution)) +
 
         
 unique(dfBOLD$country)
-dfBOLD_United_States <- dfBOLD.sub[dfBOLD.sub$country =="United States",]
-library(dplyr)
-dfBOLD_United_States <- dfBOLD.sub %>% filter(country == "United States")
+dfBOLD_United_States <- dfBOLD.sub %>% filter(country == "United States") #SAMESAME
 ls()
-y <- table(dfBOLD_United_States$species_name)
-y
+table.species.us <- table(dfBOLD_United_States$species_name)
+table.species.us
 counts <- c(85,35,33,29,25)
 names <- c("Watersipora subtorquata","Membranipora chesapeakensis","Membranipora membranacea","Watersipora sp. COI group A","Watersipora sp. Santa Cruz Harbour ")
 
-library(ggplot2)
-df <- data.frame(
+#removed the first dfBOLD_United_States code as it wasn't used and contained NA values
+
+dfSpeciesUS <- data.frame(
 species = c("Watersipora subtorquata","Membranipora chesapeakensis","Membranipora membranacea","Watersipora sp. COI group A","Watersipora sp. Santa Cruz Harbour"),
 
 count = c(85,35,33,25,29),
 contribution = c("Cancer contribution", "Cancer contribution", "Cancer contribution", "Non Cancer contribution", "Non Cancer contribution")
 )
-ggplot(df,aes(reorder(species, count), y = count, fill = contribution)) +
+ggplot(dfSpeciesUS,aes(reorder(species, count), y = count, fill = contribution)) +
   geom_bar(stat = "identity") +
   labs(
     title = "Bryozoan Species Found in United States", 
@@ -177,22 +182,19 @@ ggplot(df,aes(reorder(species, count), y = count, fill = contribution)) +
   scale_fill_manual(values = c("lightgreen", "lightblue"))
 
 
-#Section 4: During this section the Bryozoan species from Canada and United States, which also contribute to cancer treatment as found was the previous graphs plotted, were graphed together. This was done in effort to compare between the two countries the species in abundance and to answer my research question in a more clearer way. The particular abundance of target species found in United states and Canada can now be clearly intreperated.
+#Section 4: During this section the Bryozoan species from Canada and United States, which also contribute to cancer treatment as found was the previous graphs plotted, were graphed together. This was done in effort to compare between the two countries the species in abundance and to answer my research question in a more clearer way. The particular abundance of target species found in United states and Canada can now be clearly interpreted.
 
 
-dfBOLD.sub <- data.frame(
+dfBOLD.sub.mod <- data.frame(
   species_name = c("Membranipora membranacea","Membranipora membranacea","Watersipora subtorquata","Primavelans insculpta"),
   country = c("United States", "Canada", "United States","Canada"),
   contribution = c(35,9,85,6))
 
-library(dplyr)
-df_combined <- dfBOLD.sub %>%
+df_combined <- dfBOLD.sub.mod %>%
   filter(country %in% c("United States", "Canada")) %>%
   group_by(species_name, country) %>%
   summarise(contribution = sum(contribution)) %>%
   ungroup()
-
-library(ggplot2)
 
 ggplot(df_combined, aes(x = "species name",y = contribution,fill = country)) +
   geom_bar(stat = "identity", position = position_dodge(width = 0.8),width = 0.4) +
@@ -229,13 +231,9 @@ ggplot(df_combined, aes(x = species_name, y = contribution, fill = country)) +
 
 #Section 5: Since we found that United States has a higher abundance in comparison to Canada, map plot was generated to see which part of the country the species are found and in what abundance.
 
-
-library(ggplot2)
-library(maps)
-
 us_map <- map_data("state")
 
-df <- data.frame(
+dfUS <- data.frame(
   species = c("Watersipora subtorquata", "Membranipora chesapeakensis", 
               "Membranipora.mem", "Watersipora sp. COI group A", 
               "Watersipora sp. Santa Cruz Harbour"),
@@ -249,8 +247,8 @@ df <- data.frame(
 
 ggplot() +
   geom_polygon(data = us_map, aes(x = long, y = lat, group = group), fill = "lightgreen", color = "white") +
-  geom_point(data = df, aes(x = lon, y = lat, color = contribution, size = count), alpha = 0.7) +
-geom_text(data = df, aes(x =lon,y = lat, label = species), hjust = -0.1, vjust = -0.5, size = 4.5) +
+  geom_point(data = dfUS, aes(x = lon, y = lat, color = contribution, size = count), alpha = 0.7) +
+geom_text(data = dfUS, aes(x =lon,y = lat, label = species), hjust = -0.1, vjust = -0.5, size = 4.5) +
   scale_size(range = c(3, 8)) + 
   labs(
     title = "Distribution of Bryozoan Species in the United States",
@@ -265,11 +263,3 @@ geom_text(data = df, aes(x =lon,y = lat, label = species), hjust = -0.1, vjust =
     legend.text = element_text(size = 14),
   ) +
   scale_color_manual(values = c("blue", "red"))
-
-
-
-
-
-
-
-
